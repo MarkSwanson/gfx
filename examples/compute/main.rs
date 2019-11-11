@@ -3,6 +3,7 @@
         feature = "vulkan",
         feature = "dx11",
         feature = "dx12",
+        feature = "gl",
         feature = "metal"
     )),
     allow(dead_code, unused_extern_crates, unused_imports)
@@ -12,20 +13,24 @@
 extern crate gfx_backend_dx11 as back;
 #[cfg(feature = "dx12")]
 extern crate gfx_backend_dx12 as back;
+#[cfg(any(feature = "gl", feature = "wgl"))]
+extern crate gfx_backend_gl as back;
 #[cfg(feature = "metal")]
 extern crate gfx_backend_metal as back;
 #[cfg(feature = "vulkan")]
 extern crate gfx_backend_vulkan as back;
 
+extern crate glutin;
+
 use std::{fs, ptr, slice, str::FromStr};
 
-use hal::{adapter::MemoryType, buffer, command, memory, pool, prelude::*, pso};
-
+use hal::{ adapter::MemoryType, buffer, command, memory, pool, prelude::*, pso };
 
 #[cfg(any(
     feature = "vulkan",
     feature = "dx11",
     feature = "dx12",
+    feature = "gl",
     feature = "metal"
 ))]
 fn main() {
@@ -42,11 +47,20 @@ fn main() {
         .collect();
     let stride = std::mem::size_of::<u32>() as u64;
 
-    let instance = back::Instance::create("gfx-rs compute", 1)
-        .expect("Failed to create an instance!");
+    let event_loop = winit::event_loop::EventLoop::new();
 
-    let adapter = instance
-        .enumerate_adapters()
+    // instantiate backend
+    let adapters = {
+
+        let context = glutin::ContextBuilder::new().build_headless(&event_loop, glutin::dpi::PhysicalSize::new(0.0, 0.0))
+            .expect("Failed to build headless context");
+        let context = unsafe { context.make_current() }.expect("Failed to make the context current");
+        let headless = back::Headless::from_context(context);
+        let adapters = headless.enumerate_adapters();
+        adapters
+    };
+     
+    let adapter = adapters
         .into_iter()
         .find(|a| {
             a.queue_families
@@ -271,8 +285,9 @@ unsafe fn create_buffer<B: hal::Backend>(
     feature = "vulkan",
     feature = "dx11",
     feature = "dx12",
+    feature = "gl",
     feature = "metal"
 )))]
 fn main() {
-    println!("You need to enable one of the next-gen API feature (vulkan, dx12, metal) to run this example.");
+    println!("You need to enable one of the next-gen API feature (vulkan, dx12, gl, metal) to run this example.");
 }

@@ -33,12 +33,14 @@ log = "0.4"
 hal = { path = "../src/hal", version = "0.4", package = "gfx-hal" }
 gfx-backend-empty = { path = "../src/backend/empty", version = "0.4" }
 winit = { version = "0.20.0-alpha4", features = ["web-sys"] }
+#glutin = { version = "0.22.0-alpha3" }
 
 [target.'cfg(debug_assertions)'.dependencies]
 env_logger = "0.6"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 glsl-to-spirv = "0.1.4"
+glutin = { version = "0.22.0-alpha3" }
 
 [dependencies.gfx-backend-gl]
 path = "../src/backend/gl"
